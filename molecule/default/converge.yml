@@ -1,0 +1,12 @@
+---
+- name: Converge
+  become: true
+  become_method: sudo
+  hosts: all
+  vars:
+    vault_autoinit: true
+  tasks:
+  - name: "Include andrelohmann.vault"
+    include_role:
+      name: "andrelohmann.vault"
+...

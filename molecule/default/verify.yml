@@ -1,0 +1,48 @@
+---
+# This is an example playbook to execute Ansible tests.
+
+- name: Verify
+  hosts: all
+  gather_facts: false
+  tasks:
+
+  - name: Vault PKI | Import token.json
+    ansible.builtin.slurp:
+      src: /opt/vault/tokens/tokens.json
+    register: vault_pki_token_json_file
+    changed_when: false
+
+  - name: Vault PKI | Parse token.json
+    ansible.builtin.set_fact:
+      vault_pki_token_json: "{{ vault_pki_token_json_file.content|b64decode|from_json }}"
+    changed_when: false
+
+  - name: Vault | Set vault tokens
+    ansible.builtin.set_fact:
+      vault_root_token: "{{ vault_pki_token_json.root_token }}"
+    changed_when: false
+
+  - name: Vault PKI | Create long-lived token to read pki_root issuer
+    ansible.builtin.shell: |
+      vault status -format=json
+    args:
+      executable: /bin/bash
+    environment:
+      VAULT_ADDR: "https://127.0.0.1:8200"
+      VAULT_SKIP_VERIFY: "true"
+      VAULT_TOKEN: "{{ vault_root_token }}"
+    register: vault_status
+
+  - name: Debug vault_status
+    ansible.builtin.debug:
+      msg: "{{ vault_status }}"
+
+  - name: Assert vault is initialized
+    ansible.builtin.assert:
+      that: (vault_status.stdout | from_json).initialized == true
+
+  - name: Assert vault is unsealed
+    ansible.builtin.assert:
+      that: (vault_status.stdout | from_json).sealed == false
+
+...

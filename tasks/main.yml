@@ -1,0 +1,10 @@
+---
+
+- name: Vault | Installation
+  ansible.builtin.include_tasks: install.yml
+
+- name: Vault | Init
+  ansible.builtin.include_tasks: autoinit.yml
+  when: vault_autoinit
+
+...

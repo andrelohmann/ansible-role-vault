@@ -1,0 +1,48 @@
+---
+
+- name: Vault | Install required packages
+  ansible.builtin.apt:
+    name: "{{ packages }}"
+    state: present
+    dpkg_options: 'force-confnew,force-confdef'
+    autoclean: true
+    autoremove: true
+    update_cache: true
+  vars:
+    packages:
+    - jq
+    - gnupg
+    - wget
+
+- name: Vault | Download HashiCorp GPG key
+  ansible.builtin.get_url:
+    url: "https://apt.releases.hashicorp.com/gpg"
+    dest: "/tmp/hashicorp.gpg"
+    mode: "0644"
+
+- name: Vault | Dearmor the GPG key
+  ansible.builtin.command:
+    cmd: "gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg /tmp/hashicorp.gpg"
+  args:
+    creates: "/usr/share/keyrings/hashicorp-archive-keyring.gpg"
+
+- name: Vault | Add HashiCorp APT repository
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com {{ ansible_lsb.codename }} main"
+    state: present
+    filename: "hashicorp"  # optional, name for the .list file
+    mode: '0644'
+
+- name: Vault | Install required packages
+  ansible.builtin.apt:
+    name: "{{ packages }}"
+    state: present
+    dpkg_options: 'force-confnew,force-confdef'
+    autoclean: true
+    autoremove: true
+    update_cache: true
+  vars:
+    packages:
+    - vault
+
+...
