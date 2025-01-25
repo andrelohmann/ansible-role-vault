@@ -1,0 +1,77 @@
+---
+
+- name: Vault | Create vault tokens dir
+  ansible.builtin.file:
+    path: "/opt/vault/tokens"
+    state: directory
+    owner: vault
+    group: vault
+    recurse: true
+
+- name: Vault | Enable & start Vault systemd service
+  ansible.builtin.systemd_service:
+    name: vault
+    daemon_reload: true
+    enabled: true
+    state: started
+
+- name: Vault | Check for /usr/local/bin/vault-automated-unseal.sh
+  ansible.builtin.stat:
+    path: /usr/local/bin/vault-automated-unseal.sh
+  register: automated_unseal
+
+- name: Vault | Initialiize Block
+  when: not automated_unseal.stat.exists
+  block:
+
+  - name: Vault | Initialize Vault
+    ansible.builtin.shell: vault operator init --key-shares=1 --key-threshold=1 --format=json
+    args:
+      executable: /bin/bash
+    environment:
+      VAULT_ADDR: "https://127.0.0.1:8200"
+      VAULT_SKIP_VERIFY: "true"
+    register: vault_init
+    changed_when: >
+      vault_init.stdout is not match("Vault is already initialized")
+
+  - name: Vault | Parse vault init JSON
+    ansible.builtin.set_fact:
+      vault_init_json: "{{ vault_init.stdout | from_json }}"
+
+  - name: Vault | Write tokens to file
+    ansible.builtin.copy:
+      dest: "/opt/vault/tokens/tokens.json"
+      content: "{{ vault_init_json }}"
+      owner: vault
+      group: vault
+      mode: '0600'
+
+  - name: Vault | Create Vault unseal script
+    ansible.builtin.template:
+      src: vault-automated-unseal.sh
+      dest: /usr/local/bin/vault-automated-unseal.sh
+      owner: vault
+      group: vault
+      mode: '0700'
+
+  - name: Vault | Configure vault.service
+    community.general.ini_file:
+      path: /lib/systemd/system/vault.service
+      section: "{{ item.section }}"
+      option: "{{ item.option }}"
+      value: "{{ item.value }}"
+      owner: root
+      group: root
+      mode: '0644'
+    with_items:
+    - { section: "Service", option: "ExecStartPost", value: "/usr/local/bin/vault-automated-unseal.sh" }
+
+  - name: Vault | Enable & reload Vault systemd service
+    ansible.builtin.systemd_service:
+      name: vault
+      daemon_reload: true
+      enabled: true
+      state: restarted
+
+...

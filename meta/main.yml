@@ -1,0 +1,22 @@
+---
+galaxy_info:
+  role_name: vault
+  author: andrelohmann
+  description: ansible galaxy role to install a single node instance of the hashicorp vault community edition
+  company: CloudCourse GmbH
+
+  license: MIT
+
+  min_ansible_version: "2.11"
+
+  platforms:
+  - name: Ubuntu
+    versions:
+    - noble
+    - jammy
+
+  galaxy_tags:
+  - vault
+
+dependencies: []
+...
