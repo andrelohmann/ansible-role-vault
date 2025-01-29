@@ -1,12 +1,12 @@
 ---
 - name: Converge
   become: true
-  become_method: sudo
+  become_method: ansible.builtin.sudo
   hosts: all
   vars:
     vault_autoinit: true
   tasks:
-  - name: "Include andrelohmann.vault"
-    include_role:
+  - name: Include andrelohmann.vault
+    ansible.builtin.include_role:
       name: "andrelohmann.vault"
 ...

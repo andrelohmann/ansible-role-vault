@@ -3,6 +3,6 @@
 roles: []
 
 collections:
-- community.crypto
+- name: community.crypto
 
 ...
