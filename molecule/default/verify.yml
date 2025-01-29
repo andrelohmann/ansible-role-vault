@@ -14,7 +14,7 @@
 
   - name: Vault PKI | Parse token.json
     ansible.builtin.set_fact:
-      vault_pki_token_json: "{{ vault_pki_token_json_file.content|b64decode|from_json }}"
+      vault_pki_token_json: "{{ vault_pki_token_json_file.content | b64decode | from_json }}"
     changed_when: false
 
   - name: Vault | Set vault tokens
@@ -32,6 +32,7 @@
       VAULT_SKIP_VERIFY: "true"
       VAULT_TOKEN: "{{ vault_root_token }}"
     register: vault_status
+    changed_when: false
 
   - name: Debug vault_status
     ansible.builtin.debug:
